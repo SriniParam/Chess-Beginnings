@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Learn Chess: Pieces, Check and Checkmate</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;800&family=Newsreader:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  --bg:#12336e; --panel:#184085; --ink:#f3f7ff; --muted:#c5d5f2; --line:#33599f;
+  --accent:#ffc857; --sq-l:#e8eefb; --sq-d:#6e93d0; --mate:#e5534b; --by:#ffc857;
+  --white-piece:#ffffff; --black-piece:#14202f;
+  --head:"Bricolage Grotesque","Trebuchet MS",system-ui,sans-serif;
+  --body:"Newsreader",Georgia,"Times New Roman",serif;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px);scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:1.15rem;line-height:1.65}
+h1,h2,h3{font-family:var(--head);line-height:1.1;margin:0 0 .5em;letter-spacing:-.01em}
+h1{font-size:clamp(2.4rem,6vw,4.2rem);font-weight:800}
+h2{font-size:clamp(1.7rem,3.6vw,2.4rem);font-weight:800}
+h3{font-size:1.25rem;font-weight:600}
+p{margin:0 0 1em;max-width:62ch}
+a{color:var(--accent)}
+:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+.wrap{max-width:1080px;margin:0 auto;padding:0 20px}
+header.top{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:18px 0;flex-wrap:wrap;border-bottom:1px solid var(--line)}
+.brand{font-family:var(--head);font-weight:800;font-size:1.2rem;text-decoration:none;color:var(--ink)}
+nav a{margin-left:18px;text-decoration:none;color:var(--muted);font-family:var(--head);font-weight:600;font-size:.95rem}
+nav a:hover{color:var(--accent)}
+.hero{display:grid;grid-template-columns:1.1fr 1fr;gap:40px;align-items:center;padding:56px 0 72px}
+.hero p.lead{font-size:1.3rem;color:var(--muted)}
+.btn{display:inline-block;background:var(--accent);color:#fff;font-family:var(--head);font-weight:600;text-decoration:none;padding:12px 22px;border-radius:6px;border:0;font-size:1rem;cursor:pointer}
+:root:not([data-theme="light"]) .btn{color:#0d1624}
+section{padding:56px 0;border-top:1px solid var(--line)}
+
+/* board */
+.board{container-type:inline-size;display:grid;grid-template-columns:repeat(8,1fr);width:100%;max-width:520px;aspect-ratio:1;border:3px solid var(--accent);border-radius:6px;overflow:hidden;box-shadow:0 18px 40px rgba(0,0,0,.35)}
+.sq{display:flex;align-items:center;justify-content:center;font-size:10.5cqw;line-height:1;font-family:"Segoe UI Symbol","Noto Sans Symbols 2","DejaVu Sans",sans-serif}
+.sq.l{background:var(--sq-l)} .sq.d{background:var(--sq-d)}
+.sq.mate{background:var(--mate)} .sq.by{background:var(--by)}
+.sq.w{color:var(--white-piece);text-shadow:-1px -1px 0 #14202f,1px -1px 0 #14202f,-1px 1px 0 #14202f,1px 1px 0 #14202f,0 0 2px #14202f}
+.sq.b{color:var(--black-piece)}
+.caption{font-size:.95rem;color:var(--muted);margin-top:10px}
+
+/* pieces */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:18px;margin-top:28px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:20px;display:grid;grid-template-columns:76px 1fr;gap:16px;align-items:start}
+.glyph{font-size:3.6rem;line-height:1;color:var(--ink);font-family:"Segoe UI Symbol","Noto Sans Symbols 2","DejaVu Sans",sans-serif;text-align:center}
+.card p{margin:0 0 .5em;font-size:1.05rem}
+.val{font-family:var(--head);font-weight:600;font-size:.9rem;color:var(--accent)}
+
+/* mates */
+.tabs{display:flex;gap:10px;flex-wrap:wrap;margin:20px 0 28px}
+.tabs button{font-family:var(--head);font-weight:600;font-size:1rem;padding:10px 16px;border-radius:6px;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer}
+.tabs button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+:root:not([data-theme="light"]) .tabs button[aria-pressed="true"]{color:#0d1624}
+.mate-view{display:grid;grid-template-columns:1fr 1fr;gap:36px;align-items:center}
+.key{display:flex;gap:18px;flex-wrap:wrap;font-size:.95rem;color:var(--muted);margin-top:10px}
+.key i{display:inline-block;width:14px;height:14px;border-radius:3px;vertical-align:-2px;margin-right:6px}
+.three{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:24px;margin-top:24px}
+.three div{border-left:4px solid var(--accent);padding-left:16px}
+.three p{font-size:1.05rem}
+.quiz .sq{cursor:pointer}
+.sq.sel{outline:4px solid var(--accent);outline-offset:-4px}
+.fb{background:var(--panel);border:1px solid var(--line);border-left:6px solid var(--line);border-radius:8px;padding:14px 16px;margin:0 0 16px;font-size:1.05rem;min-height:3.4em}
+.fb.ok{border-left-color:#4cc38a}
+.fb.no{border-left-color:var(--mate)}
+.qbtns{display:flex;gap:10px;flex-wrap:wrap}
+.qbtns button{font-family:var(--head);font-weight:600;font-size:1rem;padding:10px 16px;border-radius:6px;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer}
+.qbtns button:hover{border-color:var(--accent)}
+footer{padding:36px 0 48px;color:var(--muted);font-size:.95rem;border-top:1px solid var(--line)}
+@media (max-width:760px){
+  .hero,.mate-view{grid-template-columns:1fr}
+  nav a{margin:0 14px 0 0}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <a class="brand" href="#top">Chess from scratch</a>
+    <nav aria-label="Main"><a href="#pieces">The pieces</a><a href="#checks">Types of check</a><a href="#mate">Checkmate</a><a href="#quiz">Quiz</a><a href="#quiz2">Mate in two</a><a href="#ending">Ending a game</a></nav>
+  </header>
+
+  <main id="top">
+    <div class="hero">
+      <div>
+        <h1>Learn chess by seeing how games end.</h1>
+        <p class="lead">Meet the six pieces, then watch real checkmates unfold square by square. The board on the right is a finished game: the black king has nowhere left to go.</p>
+        <a class="btn" href="#pieces">Start with the pieces</a>
+      </div>
+      <div>
+        <div class="board" id="heroBoard" role="img" aria-label="Chess board showing scholar's mate: white queen on f7 checkmates the black king on e8"></div>
+        <p class="caption">Scholar’s mate, after four white moves.</p>
+      </div>
+    </div>
+
+    <section id="pieces">
+      <h2>The six pieces</h2>
+      <p>Each side starts with sixteen pieces. Values are a rough guide to how much each is worth when you trade.</p>
+      <div class="grid">
+        <article class="card"><div class="glyph" aria-hidden="true">&#9818;</div><div><h3>King</h3><p>Moves one square in any direction. It can never move into check, and losing it means losing the game.</p><span class="val">Value: priceless</span></div></article>
+        <article class="card"><div class="glyph" aria-hidden="true">&#9819;</div><div><h3>Queen</h3><p>Moves any distance along a rank, file, or diagonal. The strongest piece on the board.</p><span class="val">Value: 9 points</span></div></article>
+        <article class="card"><div class="glyph" aria-hidden="true">&#9820;</div><div><h3>Rook</h3><p>Moves any distance in a straight line, forward, back, or sideways. Strongest on open files.</p><span class="val">Value: 5 points</span></div></article>
+        <article class="card"><div class="glyph" aria-hidden="true">&#9821;</div><div><h3>Bishop</h3><p>Moves any distance diagonally and stays on the same color of square for the whole game.</p><span class="val">Value: 3 points</span></div></article>
+        <article class="card"><div class="glyph" aria-hidden="true">&#9822;</div><div><h3>Knight</h3><p>Jumps in an L: two squares one way, then one to the side. It is the only piece that can leap over others.</p><span class="val">Value: 3 points</span></div></article>
+        <article class="card"><div class="glyph" aria-hidden="true">&#9823;&#xFE0E;</div><div><h3>Pawn</h3><p>Moves forward one square, or two from its starting square. It captures one square diagonally forward and promotes when it reaches the far side.</p><span class="val">Value: 1 point</span></div></article>
+      </div>
+      <div class="three">
+        <div><h3>Castling</h3><p>The king moves two squares toward a rook, and that rook jumps to the other side of the king. It protects your king and activates the rook.</p></div>
+        <div><h3>En passant</h3><p>If an enemy pawn advances two squares past your pawn, you may capture it as if it had moved only one, but only on the very next move.</p></div>
+        <div><h3>Promotion</h3><p>A pawn that reaches the last rank becomes a queen, rook, bishop, or knight of your choice. Most players choose a queen.</p></div>
+      </div>
+    </section>
+
+    <section id="checks">
+      <h2>Ways to give check</h2>
+      <p>Almost every checkmate starts with a check. Knowing the different kinds helps you attack, and helps you spot danger before it lands.</p>
+      <div class="three">
+        <div><h3>Direct check</h3><p>The piece you just moved attacks the king. It is the simplest kind, and the opponent must answer it at once.</p></div>
+        <div><h3>Discovered check</h3><p>You move one piece out of the way, and a piece behind it attacks the king. The piece that moved can make its own threat at the same time, so the opponent faces two problems.</p></div>
+        <div><h3>Double check</h3><p>Two pieces attack the king at once, often when a discovered check is also a direct check. You cannot capture or block both, so the king must move.</p></div>
+        <div><h3>Knight and pawn checks</h3><p>These cannot be blocked, because a knight jumps and a pawn attacks from an adjacent square. The answer is to capture the checker or move the king.</p></div>
+        <div><h3>Perpetual check</h3><p>You keep giving check and the opponent cannot escape the sequence. The game ends in a draw, which is a useful rescue when you are behind.</p></div>
+        <div><h3>Answering a check</h3><p>You have three options: capture the attacker, block the line of attack, or move the king. If none is possible, it is checkmate.</p></div>
+      </div>
+      <p style="margin-top:24px">A habit worth building: before every move, ask which checks your opponent could give next, and which checks you could give.</p>
+    </section>
+
+    <section id="mate">
+      <h2>Check and checkmate</h2>
+      <p><strong>Check</strong> means the king is under attack. You must respond by capturing the attacker, blocking it, or moving the king. <strong>Checkmate</strong> means check with no legal way out, and the game ends right there.</p>
+      <div class="tabs" role="group" aria-label="Choose a checkmate pattern" id="tabs"></div>
+      <div class="mate-view">
+        <div>
+          <div class="board" id="mateBoard" role="img" aria-label=""></div>
+          <div class="key"><span><i style="background:var(--mate)"></i>King in checkmate</span><span><i style="background:var(--by)"></i>Piece giving mate</span></div>
+        </div>
+        <div>
+          <h3 id="mateTitle"></h3>
+          <p id="mateText"></p>
+          <p id="mateWhy"></p>
+        </div>
+      </div>
+    </section>
+
+    <section id="quiz">
+      <h2>Test yourself</h2>
+      <p>White to move. Find checkmate in one: click a white piece, then click the square you want to move it to. You will see the reply right away.</p>
+      <div class="mate-view">
+        <div><div class="board quiz" id="quizBoard" role="group" aria-label="Quiz board"></div></div>
+        <div>
+          <h3 id="qTitle"></h3>
+          <div class="fb" id="qFeedback" role="status" aria-live="polite"></div>
+          <div class="qbtns"><button type="button" id="qHint">Hint</button><button type="button" id="qShow">Show answer</button><button type="button" id="qNext">Next puzzle</button></div>
+          <p class="caption" id="qScore"></p>
+        </div>
+      </div>
+    </section>
+
+    <section id="quiz2">
+      <h2>Mate in two</h2>
+      <p>White to move. Find a first move that forces checkmate on your next turn, whatever Black does. Click a piece, then its destination. Black replies automatically, and then you deliver the mate.</p>
+      <div class="mate-view">
+        <div><div class="board quiz" id="quiz2Board" role="group" aria-label="Mate in two board"></div></div>
+        <div>
+          <h3 id="q2Title"></h3>
+          <div class="fb" id="q2Feedback" role="status" aria-live="polite"></div>
+          <div class="qbtns"><button type="button" id="q2Hint">Hint</button><button type="button" id="q2Show">Show answer</button><button type="button" id="q2Restart">Restart</button><button type="button" id="q2Next">Next puzzle</button></div>
+          <p class="caption" id="q2Score"></p>
+        </div>
+      </div>
+    </section>
+
+    <section id="ending">
+      <h2>Other ways a game ends</h2>
+      <div class="three">
+        <div><h3>Stalemate</h3><p>The player to move is not in check but has no legal move. The game is a draw, not a win.</p></div>
+        <div><h3>Resignation</h3><p>A player concedes when the position is lost. This is common at every level.</p></div>
+        <div><h3>Draw</h3><p>By agreement, by repeating the same position three times, by insufficient material, or after fifty moves without a capture or pawn move.</p></div>
+      </div>
+    </section>
+  </main>
+  <footer>Pieces are drawn with standard Unicode chess symbols. Boards are generated in the browser from position strings, so you can add more checkmates by adding one line to the list in the script.</footer>
+</div>
+
+<script>
+var GLYPH = {K:"\u265A",Q:"\u265B",R:"\u265C",B:"\u265D",N:"\u265E",P:"\u265F\uFE0E"};
+var FILES = "abcdefgh";
+
+function renderBoard(el, fen, mate, by){
+  el.innerHTML = "";
+  var rows = fen.split(" ")[0].split("/");
+  rows.forEach(function(row, r){
+    var f = 0;
+    var cells = [];
+    row.split("").forEach(function(ch){
+      if (/\d/.test(ch)) { for (var i = 0; i < +ch; i++) cells.push(null); }
+      else cells.push(ch);
+    });
+    cells.forEach(function(p, f){
+      var d = document.createElement("div");
+      var name = FILES[f] + (8 - r);
+      d.className = "sq " + (((r + f) % 2) ? "d" : "l");
+      d.dataset.sq = name;
+      if (name === mate) d.className += " mate";
+      if (name === by) d.className += " by";
+      if (p) {
+        d.className += (p === p.toUpperCase()) ? " w" : " b";
+        d.textContent = GLYPH[p.toUpperCase()];
+      }
+      el.appendChild(d);
+    });
+  });
+}
+
+var MATES = [
+  { name:"Scholar’s mate", fen:"r1bqkb1r/pppp1Qpp/2n2n2/4p3/2B1P3/8/PPPP1PPP/RNB1K1NR b", king:"e8", by:"f7",
+    text:"White’s queen takes the f7 pawn, and a bishop on c4 guards the queen from behind.",
+    why:"The king cannot capture the queen because the bishop protects it, and the pieces around the king block every other square. This trap works only against careless opponents, so watch for it on both sides." },
+  { name:"Fool’s mate", fen:"rnb1kbnr/pppp1ppp/8/4p3/6Pq/5P2/PPPPP2P/RNBQKBNR w", king:"e1", by:"h4",
+    text:"The fastest possible checkmate: White plays f3 and g4, then Black’s queen lands on h4.",
+    why:"Those two pawn moves open the diagonal from h4 to e1. White’s own pawns and pieces box the king in, and nothing can block the diagonal. The lesson: be careful moving the pawns in front of your king." },
+  { name:"Back-rank mate", fen:"3R2k1/5ppp/8/8/8/8/8/6K1 b", king:"g8", by:"d8",
+    text:"A rook slides to the back rank, and the black king is trapped behind its own pawns.",
+    why:"The pawns on f7, g7, and h7 take away the king’s escape squares, and the rook controls the whole eighth rank. Give your king breathing room with a move like h6 to avoid this common pattern." },
+  { name:"Queen and king mate", fen:"4k3/4Q3/4K3/8/8/8/8/8 b", king:"e8", by:"e7",
+    text:"The queen gives check from right in front of the king, and the white king stands behind her.",
+    why:"The queen covers every square around the black king, and she cannot be captured because the white king protects her. This is the first mate to learn, since it ends many won endgames." },
+  { name:"Ladder mate", fen:"R3k3/1R6/8/8/8/8/8/6K1 b", king:"e8", by:"a8",
+    text:"Two rooks take turns pushing the king toward the edge, like climbing a ladder.",
+    why:"One rook controls the seventh rank, so the king cannot step off the back rank. The other gives check along the eighth rank. Two rooks can force mate against a lone king." },
+  { name:"Smothered mate", fen:"6rk/5Npp/8/8/8/8/8/6K1 b", king:"h8", by:"f7",
+    text:"A knight checks a king that is surrounded by its own pieces.",
+    why:"The rook and pawns leave the king no squares, and only a knight can check without a line the defenders could block. It often follows a queen sacrifice." },
+  { name:"Anastasia’s mate", fen:"8/4N1pk/8/8/8/8/8/K6R b", king:"h7", by:"h1",
+    text:"A knight and a rook work together against a king hemmed in at the edge.",
+    why:"The knight on e7 guards g8 and g6, a pawn blocks g7, and the rook checks down the h-file. Look for it when the enemy king sits on the h-file with a pawn beside it." },
+  { name:"Arabian mate", fen:"7k/7R/5N2/8/8/8/8/6K1 b", king:"h8", by:"h7",
+    text:"A rook checks from h7 in the corner, protected by a knight.",
+    why:"The rook takes away g7 and the h-file, and the knight on f6 guards both h7 and g8. The king cannot capture the rook because the knight defends it." }
+];
+
+var heroFen = MATES[0].fen;
+renderBoard(document.getElementById("heroBoard"), heroFen, "e8", "f7");
+
+var tabs = document.getElementById("tabs");
+function show(i){
+  var m = MATES[i];
+  renderBoard(document.getElementById("mateBoard"), m.fen, m.king, m.by);
+  document.getElementById("mateBoard").setAttribute("aria-label", m.name + ": the king on " + m.king + " is checkmated by the piece on " + m.by);
+  document.getElementById("mateTitle").textContent = m.name;
+  document.getElementById("mateText").textContent = m.text;
+  document.getElementById("mateWhy").textContent = m.why;
+  Array.prototype.forEach.call(tabs.children, function(b, j){ b.setAttribute("aria-pressed", j === i ? "true" : "false"); });
+}
+MATES.forEach(function(m, i){
+  var b = document.createElement("button");
+  b.type = "button";
+  b.textContent = m.name;
+  b.addEventListener("click", function(){ show(i); });
+  tabs.appendChild(b);
+});
+show(0);
+
+var PUZZLES = [
+  { fen:"3rkr2/8/8/8/8/8/Q7/6K1 w", move:["a2","e6"], king:"e8", hint:"The king’s two rooks block its own back rank. Which square attacks the king and the squares beside it?", why:"Qe6 is an epaulette mate: the rooks on d8 and f8 sit like shoulder pads, and the queen covers d7, e7, and f7." },
+  { fen:"8/8/8/8/8/4K3/R7/4k3 w", move:["a2","a1"], king:"e1", hint:"Your king already guards the squares in front of the black king. Use the rook to cut off the back rank.", why:"Ra1 is a rook and king mate: the king covers d2, e2, and f2, and the rook covers the whole first rank." },
+  { fen:"2kr4/p2p4/8/1B6/5B2/8/8/6K1 w", move:["b5","a6"], king:"c8", hint:"One bishop already eyes b8 and c7. Where can the other check through b7?", why:"Ba6 is Boden’s mate: one bishop checks along the diagonal, and the other covers b8 and c7 while the black pieces block d7 and d8." },
+  { fen:"7k/8/7P/8/8/8/8/5KR1 w", move:["g1","g7"], king:"h8", hint:"Your pawn guards g7. Put a heavy piece there.", why:"Rg7 is Anderssen’s mate: the pawn on h6 protects the rook, which covers g8 and h7." },
+  { fen:"k7/8/3N4/8/8/8/8/1Q5K w", move:["b1","b7"], king:"a8", hint:"The knight guards b7. Which piece can land there with check?", why:"Qb7 is a queen and knight mate: the knight protects the queen, and the queen covers a7 and b8." }
+];
+var qb = document.getElementById("quizBoard"), fb = document.getElementById("qFeedback");
+var qi = 0, sel = null, tries = 0, done = false, solved = {};
+function say(t, c){ fb.textContent = t; fb.className = "fb " + (c || ""); }
+function score(){ document.getElementById("qScore").textContent = "Solved: " + Object.keys(solved).length + " of " + PUZZLES.length; }
+function sqEl(n){ return qb.querySelector('[data-sq="' + n + '"]'); }
+function loadQ(i){
+  qi = i; sel = null; tries = 0; done = false;
+  renderBoard(qb, PUZZLES[i].fen, null, null);
+  document.getElementById("qTitle").textContent = "Puzzle " + (i + 1) + " of " + PUZZLES.length + ": mate in one";
+  say("Click a white piece, then the square to move it to.");
+  score();
+}
+function play(from, to){
+  var f = sqEl(from), t = sqEl(to);
+  t.textContent = f.textContent; t.classList.remove("b"); t.classList.add("w", "by");
+  f.textContent = ""; f.classList.remove("w", "sel");
+  sqEl(PUZZLES[qi].king).classList.add("mate");
+}
+qb.addEventListener("click", function(e){
+  var s = e.target.closest(".sq");
+  if (!s || done) return;
+  var n = s.dataset.sq, p = PUZZLES[qi];
+  if (!sel) {
+    if (s.classList.contains("w")) { sel = n; s.classList.add("sel"); say("Now click the square you want to move to."); }
+    else say("Start by clicking one of the white pieces.", "no");
+    return;
+  }
+  if (n === sel) { s.classList.remove("sel"); sel = null; say("Move cancelled. Click a white piece."); return; }
+  if (s.classList.contains("w")) { sqEl(sel).classList.remove("sel"); sel = n; s.classList.add("sel"); say("Now click the square you want to move to."); return; }
+  var from = sel; sel = null; sqEl(from).classList.remove("sel");
+  if (from === p.move[0] && n === p.move[1]) {
+    done = true; play(from, n); solved[qi] = 1; score();
+    say("Checkmate! " + p.why, "ok");
+  } else {
+    tries++;
+    say("Not checkmate. " + (tries >= 2 ? p.hint : "Look for a move that attacks the king and leaves it no escape. Try again."), "no");
+  }
+});
+document.getElementById("qHint").addEventListener("click", function(){ say(PUZZLES[qi].hint); });
+document.getElementById("qShow").addEventListener("click", function(){
+  if (done) return;
+  var p = PUZZLES[qi]; done = true; play(p.move[0], p.move[1]);
+  say("The answer is " + p.move[0] + " to " + p.move[1] + ". " + p.why, "ok");
+});
+document.getElementById("qNext").addEventListener("click", function(){ loadQ((qi + 1) % PUZZLES.length); });
+loadQ(0);
+
+/* Small chess engine used by the mate-in-two quiz */
+var N = [[1,2],[2,1],[-1,2],[-2,1],[1,-2],[2,-1],[-1,-2],[-2,-1]], D = [[1,1],[1,-1],[-1,1],[-1,-1]], S = [[1,0],[-1,0],[0,1],[0,-1]];
+function inb(r, f){ return r >= 0 && r < 8 && f >= 0 && f < 8; }
+function isW(c){ return c === c.toUpperCase(); }
+function parse(fen){ var b = []; fen.split(" ")[0].split("/").forEach(function(row){ row.split("").forEach(function(ch){ if (/\d/.test(ch)) { for (var i = 0; i < +ch; i++) b.push(""); } else b.push(ch); }); }); return b; }
+function nm(i){ return FILES[i & 7] + (8 - (i >> 3)); }
+function idx(n){ return (8 - (+n.charAt(1))) * 8 + FILES.indexOf(n.charAt(0)); }
+function toFen(b){ var s = []; for (var r = 0; r < 8; r++) { var row = "", e = 0; for (var f = 0; f < 8; f++) { var c = b[r * 8 + f]; if (c) { if (e) { row += e; e = 0; } row += c; } else e++; } if (e) row += e; s.push(row); } return s.join("/") + " w"; }
+function att(b, i, wh){
+  var r = i >> 3, f = i & 7, k, x, y, d, t, c;
+  function s(ch){ return wh ? ch : ch.toLowerCase(); }
+  var pr = wh ? r + 1 : r - 1;
+  for (d = -1; d < 2; d += 2) if (inb(pr, f + d) && b[pr * 8 + f + d] === s("P")) return true;
+  for (k = 0; k < 8; k++) { x = r + N[k][0]; y = f + N[k][1]; if (inb(x, y) && b[x * 8 + y] === s("N")) return true; }
+  for (k = 0; k < 4; k++) {
+    x = r + D[k][0]; y = f + D[k][1]; if (inb(x, y) && b[x * 8 + y] === s("K")) return true;
+    x = r + S[k][0]; y = f + S[k][1]; if (inb(x, y) && b[x * 8 + y] === s("K")) return true;
+  }
+  var rays = [[D, "B"], [S, "R"]];
+  for (t = 0; t < 2; t++) for (k = 0; k < 4; k++) {
+    var dx = rays[t][0][k][0], dy = rays[t][0][k][1]; x = r + dx; y = f + dy;
+    while (inb(x, y)) { c = b[x * 8 + y]; if (c) { if (c === s(rays[t][1]) || c === s("Q")) return true; break; } x += dx; y += dy; }
+  }
+  return false;
+}
+function apply(b, m){ var nb = b.slice(), p = b[m[0]]; if (p === "P" && m[1] < 8) p = "Q"; if (p === "p" && m[1] > 55) p = "q"; nb[m[1]] = p; nb[m[0]] = ""; return nb; }
+function moves(b, wh){
+  var out = [], i;
+  function tr(i, j){ var nb = apply(b, [i, j]); if (!att(nb, nb.indexOf(wh ? "K" : "k"), !wh)) out.push([i, j]); }
+  for (i = 0; i < 64; i++) {
+    var c = b[i]; if (!c || isW(c) !== wh) continue;
+    var u = c.toUpperCase(), r = i >> 3, f = i & 7, k, x, y, t;
+    if (u === "P") {
+      var dr = wh ? -1 : 1, st = wh ? 6 : 1;
+      if (inb(r + dr, f) && !b[(r + dr) * 8 + f]) { tr(i, (r + dr) * 8 + f); if (r === st && !b[(r + 2 * dr) * 8 + f]) tr(i, (r + 2 * dr) * 8 + f); }
+      for (var d = -1; d < 2; d += 2) { if (inb(r + dr, f + d)) { t = b[(r + dr) * 8 + f + d]; if (t && isW(t) !== wh) tr(i, (r + dr) * 8 + f + d); } }
+    } else if (u === "N" || u === "K") {
+      var offs = u === "N" ? N : D.concat(S);
+      for (k = 0; k < offs.length; k++) { x = r + offs[k][0]; y = f + offs[k][1]; if (!inb(x, y)) continue; t = b[x * 8 + y]; if (!t || isW(t) !== wh) tr(i, x * 8 + y); }
+    } else {
+      var dirs = u === "B" ? D : u === "R" ? S : D.concat(S);
+      for (k = 0; k < dirs.length; k++) { x = r + dirs[k][0]; y = f + dirs[k][1];
+        while (inb(x, y)) { t = b[x * 8 + y]; if (t) { if (isW(t) !== wh) tr(i, x * 8 + y); break; } tr(i, x * 8 + y); x += dirs[k][0]; y += dirs[k][1]; } }
+    }
+  }
+  return out;
+}
+function mated(b, wh){ return !moves(b, wh).length && att(b, b.indexOf(wh ? "K" : "k"), !wh); }
+function forces(b1){
+  var rs = moves(b1, false);
+  if (!rs.length) return att(b1, b1.indexOf("k"), true);
+  return rs.every(function(r){ var b2 = apply(b1, r); return moves(b2, true).some(function(w){ return mated(apply(b2, w), false); }); });
+}
+
+/* Mate-in-two quiz */
+var P2 = [
+  { fen:"4k3/8/8/8/8/8/1R6/R5K1 w", hint:"Use one rook to shut the king onto the back rank, then finish with the other.", why:"This is a ladder mate: one rook takes the seventh rank, and the other gives mate on the eighth." },
+  { fen:"r5k1/1p3ppp/8/3Q4/8/8/8/3R2K1 w", hint:"Give up your queen on the back rank so your rook can recapture with check.", why:"Qd8+ forces Rxd8, and then Rxd8 is mate. The pawns trap the king on the back rank." },
+  { fen:"5r1k/6pp/7N/8/8/1Q6/8/6K1 w", hint:"Sacrifice the queen next to the king, so the rook takes and boxes the king in.", why:"Qg8+ forces Rxg8, and then Nf7 is smothered mate. This famous trick is called Philidor’s legacy." }
+];
+var q2b = document.getElementById("quiz2Board"), q2f = document.getElementById("q2Feedback");
+var q2i = 0, q2 = null, q2stage = 1, q2sel = null, q2tries = 0, q2done = false, q2lock = false, q2solved = {};
+function say2(t, c){ q2f.textContent = t; q2f.className = "fb " + (c || ""); }
+function score2(){ document.getElementById("q2Score").textContent = "Solved: " + Object.keys(q2solved).length + " of " + P2.length; }
+function draw(hk, hb){
+  renderBoard(q2b, toFen(q2), hk || null, hb || null);
+  if (q2sel !== null) q2b.querySelector('[data-sq="' + nm(q2sel) + '"]').classList.add("sel");
+}
+function mv(m){ return nm(m[0]) + " to " + nm(m[1]); }
+function isMating(b, m){ return mated(apply(b, m), false); }
+function load2(i){
+  q2i = i; q2 = parse(P2[i].fen); q2stage = 1; q2sel = null; q2tries = 0; q2done = false; q2lock = false;
+  draw();
+  document.getElementById("q2Title").textContent = "Puzzle " + (i + 1) + " of " + P2.length + ": mate in two";
+  say2("Click a white piece, then the square to move it to.");
+  score2();
+}
+function finish2(b, to, text){ q2 = b; q2done = true; draw(nm(q2.indexOf("k")), nm(to)); say2(text, "ok"); }
+q2b.addEventListener("click", function(e){
+  var s = e.target.closest(".sq");
+  if (!s || q2done || q2lock) return;
+  var n = idx(s.dataset.sq), c = q2[n];
+  if (q2sel === null) {
+    if (c && isW(c)) { q2sel = n; draw(); say2("Now click the square you want to move to."); }
+    else say2("Start by clicking one of the white pieces.", "no");
+    return;
+  }
+  if (n === q2sel) { q2sel = null; draw(); say2("Move cancelled. Click a white piece."); return; }
+  if (c && isW(c)) { q2sel = n; draw(); say2("Now click the square you want to move to."); return; }
+  var from = q2sel; q2sel = null;
+  var legal = moves(q2, true).some(function(m){ return m[0] === from && m[1] === n; });
+  if (!legal) { draw(); say2("That move is not legal. Try a different square.", "no"); return; }
+  var after = apply(q2, [from, n]);
+  if (q2stage === 1) {
+    if (mated(after, false)) { solvedOne(after, n, "Checkmate, and even faster than expected! "); return; }
+    if (forces(after)) {
+      var rs = moves(after, false);
+      q2 = after; q2lock = true; draw(); say2("Good move. Black has to reply…");
+      setTimeout(function(){
+        var r = rs[Math.floor(Math.random() * rs.length)];
+        q2 = apply(q2, r); q2stage = 2; q2lock = false; draw();
+        say2("Black played " + mv(r) + ". Now deliver checkmate.");
+      }, 700);
+    } else {
+      q2tries++; draw();
+      say2("That does not force mate in two. " + (q2tries >= 2 ? P2[q2i].hint : "Try again."), "no");
+    }
+  } else {
+    if (mated(after, false)) solvedOne(after, n, "Checkmate! ");
+    else { draw(); say2("That is not checkmate. Look for a move that attacks the king and leaves it no escape.", "no"); }
+  }
+});
+function solvedOne(b, to, lead){ q2solved[q2i] = 1; score2(); finish2(b, to, lead + P2[q2i].why); }
+document.getElementById("q2Hint").addEventListener("click", function(){ if (!q2done) say2(P2[q2i].hint); });
+document.getElementById("q2Show").addEventListener("click", function(){
+  if (q2done || q2lock) return;
+  var ms = moves(q2, true), i, m2;
+  if (q2stage === 2) {
+    m2 = ms.filter(function(m){ return isMating(q2, m); })[0];
+    finish2(apply(q2, m2), m2[1], "The mating move is " + mv(m2) + ". " + P2[q2i].why); return;
+  }
+  for (i = 0; i < ms.length; i++) {
+    var b1 = apply(q2, ms[i]);
+    if (forces(b1)) {
+      var r = moves(b1, false)[0], b2 = apply(b1, r);
+      m2 = moves(b2, true).filter(function(m){ return isMating(b2, m); })[0];
+      finish2(apply(b2, m2), m2[1], "One solution: " + mv(ms[i]) + ", Black replies " + mv(r) + ", then " + mv(m2) + " is mate. " + P2[q2i].why);
+      return;
+    }
+  }
+});
+document.getElementById("q2Restart").addEventListener("click", function(){ load2(q2i); });
+document.getElementById("q2Next").addEventListener("click", function(){ load2((q2i + 1) % P2.length); });
+load2(0);
+</script>
+</body>
+</html>
